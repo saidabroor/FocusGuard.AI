@@ -1,0 +1,7 @@
+opencv-python
+dlib
+imutils
+scipy
+flask
+numpy
+ultralytics
