@@ -1,44 +1,57 @@
-import os
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
-# Title
-st.title("Focus Detection Dashboard")
+st.title("Focus Detection Timeline Dashboard")
 
-# Read the CSV log
-log_path = "logs/focus_log.csv"
-if not os.path.exists(log_path):
-    st.warning("No focus log found. Please run video analysis first.")
+csv_path = "logs/focus_timeline.csv"
+if not os.path.exists(csv_path):
+    st.warning("No timeline log found. Run video analysis first.")
 else:
-    df = pd.read_csv(log_path)
+    df = pd.read_csv(csv_path)
 
-    # Convert time to seconds
-    def time_to_seconds(t):
-        h, m, s = map(int, t.split(":"))
-        return h * 3600 + m * 60 + s
+    # Convert time strings to datetime
+    df["Start Time"] = pd.to_datetime(df["Start Time"], format="%H:%M:%S")
+    df["End Time"] = pd.to_datetime(df["End Time"], format="%H:%M:%S")
 
-    df["start_sec"] = df["Start Time"].apply(time_to_seconds)
+    # Create a continuous timeline from Start and End times and status
+    times = []
+    statuses = []
 
-    # Map status to numeric values
+    for _, row in df.iterrows():
+        times.append(row["Start Time"])
+        statuses.append(row["Status"])
+        times.append(row["End Time"])
+        statuses.append(row["Status"])
+
+    # Build DataFrame for step plot
+    plot_df = pd.DataFrame({"Time": times, "Status": statuses})
+
+    # Map statuses to numbers for y-axis
     status_map = {
         "Focused": 1,
         "Not Focused": 0,
         "No Eyes Detected": -1,
         "No Face Detected": -2
     }
-    df["status_value"] = df["Status"].map(status_map)
+    plot_df["StatusNum"] = plot_df["Status"].map(status_map)
 
-    # Plot
-    fig, ax = plt.subplots(figsize=(12, 4))
-    ax.plot(df["start_sec"], df["status_value"], marker='o', linestyle='-')
-    ax.set_xlabel("Time (seconds)")
-    ax.set_ylabel("Focus Status")
-    ax.set_title("Focus Status Over Time")
+    # Plotting
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.step(plot_df["Time"], plot_df["StatusNum"], where='post')
+
+    # Formatting y axis
     ax.set_yticks(list(status_map.values()))
     ax.set_yticklabels(list(status_map.keys()))
+
+    ax.set_xlabel("Time")
+    ax.set_title("Focus Status Over Time")
+    plt.xticks(rotation=45)
+
     st.pyplot(fig)
 
-    # Stats
-    st.markdown("### Summary Stats")
+    # Summary stats
+    st.markdown("### Status Summary")
     st.write(df["Status"].value_counts())
+
