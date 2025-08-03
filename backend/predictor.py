@@ -16,33 +16,49 @@ def determine_focus(eye_status, head_status):
     if eye_status["drowsy"] or head_status == "Looking Away":
         return "Not Focused"
     return "Focused"
+
 def analyze_frame(frame):
-    # Eye detection
     detections = eye_detector.detect_eye_landmarks(frame)
-    is_drowsy = any(d["closed"] for d in detections)
+    is_drowsy = any(d.get("closed", False) for d in detections)
+
     eye_status = {
         "eye_detected": len(detections) > 0,
         "drowsy": is_drowsy,
     }
 
-    # Head pose detection
+    face_box = None
+    left_eye_coords = []
+    right_eye_coords = []
+
+    if detections:
+        d = detections[0]  # Use first detected face
+        try:
+            rect = d["face"]
+            face_box = [
+                rect.left(),
+                rect.top(),
+                rect.width(),
+                rect.height()
+            ]
+        except KeyError:
+            face_box = None
+
+        # Eye landmarks (list of (x, y))
+        left_eye_coords = [(int(p[0]), int(p[1])) for p in d.get("left_eye", [])]
+        right_eye_coords = [(int(p[0]), int(p[1])) for p in d.get("right_eye", [])]
+
     pitch_yaw_roll = get_head_pose(frame)
     if pitch_yaw_roll:
         pitch, yaw, roll = pitch_yaw_roll
-        
-        # Adjust pitch to center around 0 (forward look)
+
         pitch -= 180
         if pitch < -180:
             pitch += 360
-        
-        # Normalize yaw and roll
         if yaw > 180:
             yaw -= 360
         if roll > 180:
             roll -= 360
-        
-        print(f"Pitch: {pitch:.2f}, Yaw: {yaw:.2f}, Roll: {roll:.2f}")
-        
+
         if abs(yaw) > 30 or abs(pitch) > 20:
             head_status = "Looking Away"
         else:
@@ -50,7 +66,6 @@ def analyze_frame(frame):
     else:
         head_status = "No Face Detected"
 
-    # Final focus determination
     focus_status = determine_focus(eye_status, head_status)
     focus_tracker.update_status(focus_status)
 
@@ -58,4 +73,4 @@ def analyze_frame(frame):
         "eye_status": eye_status,
         "head_status": head_status,
         "focus_status": focus_status
-    } 
+    }
