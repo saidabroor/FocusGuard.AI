@@ -49,26 +49,29 @@ Edit
 
 ### 1. Clone the Repo
 
-```bash
+
 git clone https://github.com/yourusername/FocusGuard.AI.git
 cd FocusGuard.AI
+
 2. Create and Activate Virtual Environment
 bash
 Copy
 Edit
 conda create -n focusenv python=3.8
 conda activate focusenv
-3. Install Dependencies
+
+4. Install Dependencies
 bash
 Copy
 Edit
 pip install -r requirements.txt
 # If using dlib:
 conda install -c conda-forge dlib
+
 ▶️ Run the App
-bash
 Copy
 Edit
+
 # Start the Flask backend
 cd backend
 python app.py
