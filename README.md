@@ -109,7 +109,7 @@ Mobile support
 Multi-user classroom view
 
 🙌 Credits
-Developed by [Your Name] using:
+Developed by Shavkatbekov Saidabror using:
 
 OpenCV
 
